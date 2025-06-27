@@ -1,3 +1,11 @@
+// Polyfill TextEncoder for Node.js test environment
+const { TextEncoder, TextDecoder } = require('util');
+global.TextEncoder = TextEncoder;
+global.TextDecoder = TextDecoder;
+
+// Mock window.alert to prevent JSDOM "Not implemented" errors
+global.alert = jest.fn();
+
 // jest-dom adds custom jest matchers for asserting on DOM nodes.
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)

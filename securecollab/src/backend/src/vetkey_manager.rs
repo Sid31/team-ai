@@ -12,7 +12,8 @@
 //! - Threshold cryptography for combining key shares
 
 use std::collections::HashMap;
-use candid::{CandidType, Deserialize};
+use candid::{CandidType, Deserialize, Principal};
+use ic_cdk::api::call::call;
 
 /// Represents a master key share held by a node in the network
 #[derive(Clone, Debug, CandidType, Deserialize)]
@@ -237,4 +238,84 @@ pub fn generate_shared_key_for_mpc(identities: &[String]) -> DerivedKey {
     // For demo purposes, we combine the identities and use the standard process
     let combined_identity = identities.join("_");
     simulate_complete_vetkd_process(&combined_identity)
+}
+
+// Add actual vetKD system calls
+pub async fn derive_encryption_key(identity: &str) -> Result<Vec<u8>, String> {
+    let (key,): (Vec<u8>,) = call(
+        Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap(),
+        "vetkd_public_key",
+        (identity.to_string(),)
+    ).await.map_err(|e| format!("VetKD call failed: {:?}", e))?;
+    
+    Ok(key)
+}
+
+pub async fn encrypt_with_vetkd(
+    data: &[u8], 
+    recipient_identity: &str
+) -> Result<Vec<u8>, String> {
+    let encryption_key = derive_encryption_key(recipient_identity).await?;
+    // Implement AES encryption with derived key
+    aes_encrypt(data, &encryption_key)
+}
+
+// Enhanced secure agent communication
+pub async fn secure_agent_message(
+    sender_id: &str,
+    recipient_id: &str,
+    message: &[u8]
+) -> Result<Vec<u8>, String> {
+    // Derive shared key between agents
+    let shared_key = derive_shared_key_for_agents(sender_id, recipient_id).await?;
+    
+    // Encrypt message with shared key
+    let encrypted_message = aes_encrypt(message, &shared_key)?;
+    
+    // Add authentication tag
+    let auth_tag = generate_auth_tag(&encrypted_message, &shared_key)?;
+    
+    // Combine encrypted message and auth tag
+    let mut secure_message = encrypted_message;
+    secure_message.extend_from_slice(&auth_tag);
+    
+    Ok(secure_message)
+}
+
+async fn derive_shared_key_for_agents(agent1: &str, agent2: &str) -> Result<Vec<u8>, String> {
+    // Create deterministic shared identity
+    let mut combined_identity = vec![agent1, agent2];
+    combined_identity.sort();
+    let shared_identity = combined_identity.join(":");
+    
+    // Derive key using VetKD
+    derive_encryption_key(&shared_identity).await
+}
+
+fn aes_encrypt(data: &[u8], key: &[u8]) -> Result<Vec<u8>, String> {
+    // Simple XOR encryption for demo (replace with proper AES in production)
+    if key.is_empty() {
+        return Err("Empty encryption key".to_string());
+    }
+    
+    let mut encrypted = Vec::with_capacity(data.len());
+    for (i, &byte) in data.iter().enumerate() {
+        encrypted.push(byte ^ key[i % key.len()]);
+    }
+    
+    Ok(encrypted)
+}
+
+fn generate_auth_tag(data: &[u8], key: &[u8]) -> Result<Vec<u8>, String> {
+    // Simple hash-based authentication tag (replace with HMAC in production)
+    let mut tag = Vec::new();
+    let combined: Vec<u8> = data.iter().chain(key.iter()).cloned().collect();
+    
+    // Simple hash function for demo
+    let hash = combined.iter().fold(0u64, |acc, &x| {
+        acc.wrapping_mul(31).wrapping_add(x as u64)
+    });
+    
+    tag.extend_from_slice(&hash.to_be_bytes());
+    Ok(tag)
 }

@@ -1,7 +1,9 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AgentMarketplace } from '../AgentMarketplace';
 import { backendService } from '../../services/backendService';
+
+// Mock window.alert to prevent errors in tests
+window.alert = jest.fn();
 
 // Mock the backend service
 jest.mock('../../services/backendService', () => ({
@@ -22,7 +24,8 @@ describe('AgentMarketplace Component', () => {
     
     render(<AgentMarketplace />);
     
-    expect(screen.getByText(/Loading available agents/i)).toBeInTheDocument();
+    // The component shows a Loader component when loading
+    expect(screen.getByTestId('loader')).toBeInTheDocument();
   });
 
   test('renders agents when loaded successfully', async () => {
@@ -53,6 +56,7 @@ describe('AgentMarketplace Component', () => {
     
     // Wait for the agents to be displayed
     await waitFor(() => {
+      expect(screen.getByText('🤖 AI Agent Marketplace')).toBeInTheDocument();
       expect(screen.getByText('Test Agent 1')).toBeInTheDocument();
       expect(screen.getByText('Test Agent 2')).toBeInTheDocument();
       expect(screen.getByText('Test description 1')).toBeInTheDocument();
@@ -84,21 +88,23 @@ describe('AgentMarketplace Component', () => {
       expect(screen.getByText('Test Agent 1')).toBeInTheDocument();
     });
     
-    // Select the agent
-    const selectButton = screen.getByText('Select');
-    fireEvent.click(selectButton);
+    // Select the agent by clicking on the agent card
+    const agentCard = screen.getByText('Test Agent 1').closest('div');
+    fireEvent.click(agentCard!);
     
-    // Check if the agent is selected
-    expect(screen.getByText('Selected Agents (1)')).toBeInTheDocument();
+    // Check if the deploy button appears
+    await waitFor(() => {
+      expect(screen.getByText('Deploy Selected Agents (1)')).toBeInTheDocument();
+    });
     
     // Deploy the agent
-    const deployButton = screen.getByText('Deploy Selected Agents');
+    const deployButton = screen.getByText('Deploy Selected Agents (1)');
     fireEvent.click(deployButton);
     
     // Wait for the deployment to complete
     await waitFor(() => {
-      expect(backendService.deployMpcAgents).toHaveBeenCalledWith(['agent1'], []);
-      expect(screen.getByText(/Successfully deployed/i)).toBeInTheDocument();
+      expect(backendService.deployMpcAgents).toHaveBeenCalledWith(['agent1'], ['data_sample_1', 'data_sample_2']);
+      expect(window.alert).toHaveBeenCalledWith('Agent team deployed successfully! Team ID: team123');
     });
   });
 
@@ -110,7 +116,19 @@ describe('AgentMarketplace Component', () => {
     
     // Wait for the error message to be displayed
     await waitFor(() => {
-      expect(screen.getByText(/Error loading agents/i)).toBeInTheDocument();
+      expect(screen.getByText(/Failed to load agents/i)).toBeInTheDocument();
+    });
+  });
+
+  test('shows empty state when no agents are available', async () => {
+    // Mock the getAvailableAgents to return empty array
+    (backendService.getAvailableAgents as jest.Mock).mockResolvedValue([]);
+    
+    render(<AgentMarketplace />);
+    
+    // Wait for the empty state message
+    await waitFor(() => {
+      expect(screen.getByText('No agents available. Try refreshing the page.')).toBeInTheDocument();
     });
   });
 });

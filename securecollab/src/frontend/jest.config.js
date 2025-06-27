@@ -8,8 +8,7 @@ export default {
   },
   transform: {
     '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
-      isolatedModules: true
+      tsconfig: 'tsconfig.json'
     }]
   },
   testMatch: ['**/__tests__/**/*.test.(ts|tsx)'],
@@ -21,10 +20,5 @@ export default {
     '!src/**/*.d.ts',
     '!src/index.tsx',
     '!src/vite-env.d.ts'
-  ],
-  globals: {
-    'ts-jest': {
-      isolatedModules: true
-    }
-  }
+  ]
 };

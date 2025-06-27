@@ -108,7 +108,7 @@ fn greet(name: String) -> String {
 
 #[ic_cdk::update]
 fn increment() -> u64 {
-    COUNTER.with(|counter| {
+    COUNTER.with(|counter| {x
         let val = *counter.borrow() + 1;
         *counter.borrow_mut() = val;
         val
@@ -204,6 +204,33 @@ async fn generate_privacy_proof(
 ) -> Result<String, String> {
     let proof = privacy_proofs::generate_proof(computation_id, "zk-SNARK".to_string());
     Ok(proof.verification_hash)
+}
+
+#[ic_cdk::update]
+async fn execute_secure_mpc_computation(
+    team_id: String,
+    computation_request: String,
+    data_sources: Vec<String>
+) -> Result<ComputationResult, String> {
+    // Get the agent team
+    let team = mpc_engine::get_team_info(team_id)?;
+    
+    // Execute secure multi-party computation
+    mpc_engine::execute_secure_mpc_computation(&team, &computation_request, &data_sources).await
+}
+
+#[ic_cdk::update]
+async fn derive_agent_encryption_key(agent_id: String) -> Result<Vec<u8>, String> {
+    vetkey_manager::derive_encryption_key(&agent_id).await
+}
+
+#[ic_cdk::update]
+async fn secure_agent_communication(
+    sender_id: String,
+    recipient_id: String,
+    message: Vec<u8>
+) -> Result<Vec<u8>, String> {
+    vetkey_manager::secure_agent_message(&sender_id, &recipient_id, &message).await
 }
 
 export_candid!();

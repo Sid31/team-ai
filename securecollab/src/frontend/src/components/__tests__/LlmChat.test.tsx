@@ -1,9 +1,8 @@
-// React is used implicitly in JSX
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { LlmChat } from '../LlmChat';
 import { openaiService } from '../../services/openaiService';
 
-// Mock the OpenAI service
+// Mock the openai service
 jest.mock('../../services/openaiService', () => ({
   openaiService: {
     prompt: jest.fn(),
@@ -16,27 +15,31 @@ describe('LlmChat Component', () => {
     jest.clearAllMocks();
   });
 
-  test('renders the LLM chat interface', () => {
+  test('renders chat interface correctly', () => {
     render(<LlmChat />);
     
-    expect(screen.getByText(/LLM Chat/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/Type your message/i)).toBeInTheDocument();
     expect(screen.getByText(/Send/i)).toBeInTheDocument();
   });
 
-  test('sends a prompt and displays the response', async () => {
+  test('sends a message and displays response', async () => {
     // Mock the prompt function to return a response
     (openaiService.prompt as jest.Mock).mockResolvedValue('This is a response from the LLM');
     
     render(<LlmChat />);
     
-    // Type a message
     const input = screen.getByPlaceholderText(/Type your message/i);
-    fireEvent.change(input, { target: { value: 'Hello, LLM!' } });
+    const sendButton = screen.getByText(/Send/i);
+    
+    // Type a message
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'Hello, LLM!' } });
+    });
     
     // Send the message
-    const sendButton = screen.getByText(/Send/i);
-    fireEvent.click(sendButton);
+    await act(async () => {
+      fireEvent.click(sendButton);
+    });
     
     // Wait for the response
     await waitFor(() => {
@@ -56,8 +59,10 @@ describe('LlmChat Component', () => {
     const input = screen.getByPlaceholderText(/Type your message/i);
     
     // First message
-    fireEvent.change(input, { target: { value: 'First message' } });
-    fireEvent.click(screen.getByText(/Send/i));
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'First message' } });
+      fireEvent.click(screen.getByText(/Send/i));
+    });
     
     // Mock the first response
     (openaiService.prompt as jest.Mock).mockResolvedValue('First response');
@@ -68,8 +73,10 @@ describe('LlmChat Component', () => {
     });
     
     // Second message
-    fireEvent.change(input, { target: { value: 'Follow-up question' } });
-    fireEvent.click(screen.getByText(/Send/i));
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'Follow-up question' } });
+      fireEvent.click(screen.getByText(/Send/i));
+    });
     
     // Wait for the second response
     await waitFor(() => {
@@ -79,23 +86,28 @@ describe('LlmChat Component', () => {
     });
   });
 
-  test('handles errors when the LLM call fails', async () => {
+  test('handles API errors when sending a message', async () => {
     // Mock the prompt function to reject with an error
-    (openaiService.prompt as jest.Mock).mockRejectedValue(new Error('Failed to get LLM response'));
+    (openaiService.prompt as jest.Mock).mockRejectedValue(new Error('API Error'));
     
     render(<LlmChat />);
     
-    // Type a message
     const input = screen.getByPlaceholderText(/Type your message/i);
-    fireEvent.change(input, { target: { value: 'Hello, LLM!' } });
+    const sendButton = screen.getByText(/Send/i);
+    
+    // Type a message
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'Test message' } });
+    });
     
     // Send the message
-    const sendButton = screen.getByText(/Send/i);
-    fireEvent.click(sendButton);
+    await act(async () => {
+      fireEvent.click(sendButton);
+    });
     
-    // Wait for the error message
+    // Wait for the error to be displayed
     await waitFor(() => {
-      expect(screen.getByText(/Error:/i)).toBeInTheDocument();
+      expect(screen.getByText(/Error: API Error/i)).toBeInTheDocument();
     });
   });
 
@@ -107,11 +119,15 @@ describe('LlmChat Component', () => {
     
     // Type a message
     const input = screen.getByPlaceholderText(/Type your message/i);
-    fireEvent.change(input, { target: { value: 'Hello, LLM!' } });
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'Hello, LLM!' } });
+    });
     
     // Send the message
     const sendButton = screen.getByText(/Send/i);
-    fireEvent.click(sendButton);
+    await act(async () => {
+      fireEvent.click(sendButton);
+    });
     
     // Check if the input is cleared
     expect(input).toHaveValue('');

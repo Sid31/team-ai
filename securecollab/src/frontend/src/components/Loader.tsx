@@ -23,6 +23,7 @@ export function Loader() {
       <div
         className="mx-auto mt-8 aspect-square w-10 bg-gray-500"
         style={loaderStyle}
+        data-testid="loader"
       />
     </>
   );
