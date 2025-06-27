@@ -11,3 +11,6 @@ export * from "./AgentMarketplace";
 export * from "./PrivacyDashboard";
 export * from "./DemoScenarios";
 export * from "./LlmChat";
+export * from "./EnterpriseDashboard";
+export { LoginPage } from './LoginPage';
+export { UserProfile } from './UserProfile';

@@ -1,15 +1,41 @@
-import { useState } from "react";
-// Import React logo from assets directory
+import React, { useState, useEffect } from 'react';
 import reactLogo from '../assets/React-icon.webp';
-
-// Import components and views
-import { Loader, ErrorDisplay, AgentMarketplace, PrivacyDashboard, DemoScenarios } from "./components";
+import { Loader, ErrorDisplay, AgentMarketplace, PrivacyDashboard, DemoScenarios, EnterpriseDashboard } from "./components";
 import { GreetingView, CounterView, LlmPromptView } from "./views";
+import { LoginPage } from './components/LoginPage';
+import { UserProfile } from './components/UserProfile';
+import { authService } from './services/authService';
 
 function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<string>("home");
+  const [activeTab, setActiveTab] = useState<string>("enterprise");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        await authService.init();
+        const state = authService.getState();
+        setIsAuthenticated(state.isAuthenticated);
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    initAuth();
+  }, []);
+
+  const handleLogin = (authenticated: boolean) => {
+    setIsAuthenticated(authenticated);
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
 
   const handleError = (errorMessage: string) => {
     setError(errorMessage);
@@ -21,6 +47,8 @@ function App() {
 
   const renderContent = () => {
     switch (activeTab) {
+      case "enterprise":
+        return <EnterpriseDashboard />;
       case "marketplace":
         return <AgentMarketplace />;
       case "privacy":
@@ -82,6 +110,21 @@ function App() {
     }
   };
 
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Initializing SecureCollab...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <style>
@@ -114,6 +157,12 @@ function App() {
             </div>
             <nav className="flex space-x-4 items-center">
               <button
+                onClick={() => setActiveTab("enterprise")}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === "enterprise" ? "bg-blue-100 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+              >
+                🏢 Enterprise Dashboard
+              </button>
+              <button
                 onClick={() => setActiveTab("home")}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === "home" ? "bg-blue-100 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
               >
@@ -137,12 +186,7 @@ function App() {
               >
                 Demo Scenarios
               </button>
-              <button
-                onClick={() => setActiveTab("llm")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === "llm" ? "bg-blue-100 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
-              >
-                LLM Chat
-              </button>
+              <UserProfile onLogout={handleLogout} />
             </nav>
           </div>
         </div>
@@ -166,7 +210,7 @@ function App() {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-500">
-              © 2025 SecureCollab - Built on the Internet Computer
+              &copy; 2025 SecureCollab - Built on the Internet Computer
             </div>
             <div className="text-sm text-gray-500">
               Privacy-Preserving Multi-Agent Computation Platform

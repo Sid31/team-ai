@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Button } from './';
 import { backendService } from '../services/backendService';
 
 interface DemoStep {

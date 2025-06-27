@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Loader } from './';
+import { Button, Loader } from './';
 import { backendService } from '../services/backendService';
 
 interface Agent {
