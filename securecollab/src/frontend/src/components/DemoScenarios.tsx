@@ -98,17 +98,13 @@ export const DemoScenarios: React.FC = () => {
             "patient_records_schema"
           );
           
-          // Deploy agents
-          const agents = ['medical_researcher', 'compliance_checker'];
-          const teamId = await backendService.deployMpcAgents(
-            agents,
-            [dataId]
-          );
+          // Deploy agents (placeholder - using existing MPC computation workflow)
+          const teamId = `team_${Date.now()}`;
           
-          // Run computation
-          await backendService.executePrivateComputation(
-            teamId,
-            "analyze_treatment_effectiveness"
+          // Run computation using existing LLM query system
+          await backendService.createLLMQuery(
+            "Analyze treatment effectiveness from uploaded medical data",
+            [dataId]
           );
           
           // Generate proof

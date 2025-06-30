@@ -1,0 +1,11 @@
+patient_id,age,gender,treatment_type,outcome_score,days_to_recovery,side_effects
+P001,45,M,Drug_X,8.5,12,mild
+P002,52,F,Drug_Y,7.2,18,none
+P003,38,M,Drug_X,9.1,10,mild
+P004,61,F,Placebo,5.8,25,none
+P005,47,M,Drug_Y,7.8,15,moderate
+P006,55,F,Drug_X,8.9,11,mild
+P007,42,M,Placebo,6.1,22,none
+P008,49,F,Drug_Y,8.2,14,mild
+P009,58,M,Drug_X,9.3,9,none
+P010,44,F,Placebo,5.9,24,none

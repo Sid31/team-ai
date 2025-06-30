@@ -45,10 +45,98 @@ const EnterpriseDashboard: React.FC = () => {
   const [aiInput, setAiInput] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadedDatasets, setUploadedDatasets] = useState<Dataset[]>([]);
+  // Mock datasets for demo - each company has pre-loaded datasets
+  const mockDatasets: Dataset[] = [
+    {
+      id: 'boston-patient-outcomes',
+      name: 'Patient Treatment Outcomes',
+      type: 'CSV',
+      size: '2.3MB',
+      encrypted: true,
+      uploadDate: '2024-06-28',
+      owner: 'Boston General Hospital',
+      schema: 'patient_id,treatment_type,outcome_score,recovery_days,side_effects',
+      headers: ['Patient ID', 'Treatment Type', 'Outcome Score', 'Recovery Days', 'Side Effects'],
+      sampleData: [
+        ['P001', 'Drug A', '8.5', '14', 'Mild nausea'],
+        ['P002', 'Drug B', '7.2', '18', 'None'],
+        ['P003', 'Drug A', '9.1', '12', 'Headache']
+      ]
+    },
+    {
+      id: 'novartis-clinical-trials',
+      name: 'Clinical Trial Results',
+      type: 'CSV',
+      size: '4.1MB',
+      encrypted: true,
+      uploadDate: '2024-06-29',
+      owner: 'Novartis Pharmaceuticals',
+      schema: 'trial_id,drug_compound,efficacy_rate,safety_score,participant_count',
+      headers: ['Trial ID', 'Drug Compound', 'Efficacy Rate', 'Safety Score', 'Participants'],
+      sampleData: [
+        ['T001', 'NVS-2024-A', '85.3%', '9.2', '250'],
+        ['T002', 'NVS-2024-B', '78.7%', '8.8', '180'],
+        ['T003', 'NVS-2024-C', '91.2%', '9.5', '320']
+      ]
+    },
+    {
+      id: 'mit-research-genomics',
+      name: 'Genomic Analysis Dataset',
+      type: 'CSV',
+      size: '8.7MB',
+      encrypted: true,
+      uploadDate: '2024-06-27',
+      owner: 'MIT Research Laboratory',
+      schema: 'sample_id,gene_expression,mutation_status,treatment_response,biomarker_level',
+      headers: ['Sample ID', 'Gene Expression', 'Mutation Status', 'Treatment Response', 'Biomarker Level'],
+      sampleData: [
+        ['S001', 'High', 'Positive', 'Responsive', '12.4'],
+        ['S002', 'Medium', 'Negative', 'Partial', '8.7'],
+        ['S003', 'Low', 'Positive', 'Non-responsive', '5.2']
+      ]
+    }
+  ];
+
+  const [uploadedDatasets, setUploadedDatasets] = useState<Dataset[]>(mockDatasets);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
-  const [computationRequests, setComputationRequests] = useState<ComputationRequest[]>([]);
+  // Mock computation requests for demo
+  const mockComputationRequests: ComputationRequest[] = [
+    {
+      id: 'req-001',
+      title: 'Cancer Treatment Effectiveness Analysis',
+      description: 'Analyze treatment outcomes across multiple datasets to identify optimal protocols',
+      requestedBy: 'MIT Research Laboratory',
+      targetDatasets: ['boston-patient-outcomes', 'novartis-clinical-trials', 'mit-research-genomics'],
+      computationType: 'Statistical Analysis with ML',
+      status: 'pending',
+      approvals: {
+        'Boston General Hospital': 'pending',
+        'Novartis Pharmaceuticals': 'pending',
+        'MIT Research Laboratory': 'approved'
+      },
+      createdAt: '2024-06-28',
+      question: 'Which treatment protocol shows the best outcomes for cancer patients aged 45-65?'
+    },
+    {
+      id: 'req-002',
+      title: 'Drug Safety Profile Comparison',
+      description: 'Compare safety profiles of different drug compounds across patient populations',
+      requestedBy: 'Novartis Pharmaceuticals',
+      targetDatasets: ['boston-patient-outcomes', 'novartis-clinical-trials'],
+      computationType: 'Multi-party Statistical Analysis',
+      status: 'approved',
+      approvals: {
+        'Boston General Hospital': 'approved',
+        'Novartis Pharmaceuticals': 'approved',
+        'MIT Research Laboratory': 'approved'
+      },
+      createdAt: '2024-06-27',
+      question: 'What are the comparative safety profiles of our new drug compounds?'
+    }
+  ];
+
+  const [computationRequests, setComputationRequests] = useState<ComputationRequest[]>(mockComputationRequests);
   const [newRequestTitle, setNewRequestTitle] = useState('');
   const [newRequestDescription, setNewRequestDescription] = useState('');
   const [newRequestQuestion, setNewRequestQuestion] = useState('');
@@ -95,50 +183,68 @@ const EnterpriseDashboard: React.FC = () => {
   const loadUserDatasets = async () => {
     try {
       const dataSources = await backendService.getDataSourcesForUser();
-      const datasets: Dataset[] = dataSources.map((source: any) => ({
-        id: source.id,
-        name: `Dataset ${source.id.substring(0, 8)}`,
-        type: 'CSV',
-        size: `${Math.round(source.encrypted_data.length / 1024)}KB`,
-        encrypted: true,
-        uploadDate: new Date(Number(source.created_at) / 1000000).toLocaleDateString(),
-        owner: source.owner,
-        schema: source.schema_hash,
-        // Mock sample data for preview
-        headers: ['patient_id', 'age', 'gender', 'treatment_type', 'outcome_score', 'days_to_recovery', 'side_effects'],
-        sampleData: [
-          ['P001', '45', 'M', 'Drug_X', '8.5', '12', 'mild'],
-          ['P002', '52', 'F', 'Drug_Y', '7.2', '18', 'none'],
-          ['P003', '38', 'M', 'Drug_X', '9.1', '10', 'mild']
-        ]
-      }));
-      setUploadedDatasets(datasets);
+      const datasets: Dataset[] = dataSources.map((source: any) => {
+        // Safe access to encrypted_data with fallback
+        const encryptedDataSize = source.encrypted_data?.ciphertext?.length || source.encrypted_data?.length || 1024;
+        const dataSize = Math.round(encryptedDataSize / 1024);
+        
+        return {
+          id: source.id,
+          name: source.name || `Dataset ${source.id.substring(0, 8)}`,
+          type: 'CSV',
+          size: `${dataSize}KB`,
+          encrypted: true,
+          uploadDate: source.created_at ? new Date(Number(source.created_at) / 1000000).toLocaleDateString() : new Date().toLocaleDateString(),
+          owner: source.owner || 'Unknown',
+          schema: source.schema_hash || 'patient_id,age,gender,treatment_type,outcome_score,days_to_recovery,side_effects',
+          // Mock sample data for preview
+          headers: ['patient_id', 'age', 'gender', 'treatment_type', 'outcome_score', 'days_to_recovery', 'side_effects'],
+          sampleData: [
+            ['🔒 P001_enc', '🔒 45_enc', '🔒 M_enc', '🔒 DrugX_enc', '🔒 8.5_enc', '🔒 12_enc', '🔒 mild_enc'],
+            ['🔒 P002_enc', '🔒 52_enc', '🔒 F_enc', '🔒 DrugY_enc', '🔒 7.2_enc', '🔒 18_enc', '🔒 none_enc'],
+            ['🔒 P003_enc', '🔒 38_enc', '🔒 M_enc', '🔒 DrugX_enc', '🔒 9.1_enc', '🔒 10_enc', '🔒 mild_enc']
+          ]
+        };
+      });
+      
+      // Combine with mock datasets for demo
+      const allDatasets = [...mockDatasets, ...datasets];
+      setUploadedDatasets(allDatasets);
     } catch (error) {
       console.error('Failed to load datasets:', error);
+      // Fallback to mock datasets if backend fails
+      setUploadedDatasets(mockDatasets);
     }
   };
 
-  const loadComputationRequests = () => {
-    // Mock computation requests
-    const mockRequests: ComputationRequest[] = [
-      {
-        id: 'req-001',
-        title: 'Cancer Treatment Effectiveness Analysis',
-        description: 'Analyze treatment outcomes across multiple datasets to identify optimal protocols',
-        requestedBy: 'MIT Research Laboratory',
-        targetDatasets: ['dataset-001', 'dataset-002'],
-        computationType: 'Statistical Analysis with ML',
-        status: 'pending',
-        approvals: {
-          'Boston General Hospital': 'pending',
-          'Novartis Pharmaceuticals': 'pending',
-          'MIT Research Laboratory': 'approved'
-        },
-        createdAt: '2024-01-15',
-        question: 'Which treatment protocol shows the best outcomes for cancer patients aged 45-65?'
-      }
-    ];
-    setComputationRequests(mockRequests);
+  const loadComputationRequests = async () => {
+    try {
+      const requests = await backendService.getAllComputationRequests();
+      console.log('Loaded computation requests:', requests);
+      setComputationRequests(requests);
+    } catch (error) {
+      console.error('Failed to load computation requests:', error);
+      // Fallback to mock data if backend fails
+      const mockRequests: ComputationRequest[] = [
+        {
+          id: 'req-001',
+          title: 'Cancer Treatment Effectiveness Analysis',
+          description: 'Analyze treatment outcomes across multiple datasets to identify optimal protocols',
+          requestedBy: 'MIT Research Laboratory',
+          targetDatasets: ['dataset-001', 'dataset-002'],
+          computationType: 'Statistical Analysis with ML',
+          status: 'pending',
+          approvals: {
+            'Boston General Hospital': 'pending',
+            'Novartis Pharmaceuticals': 'pending',
+            'MIT Research Laboratory': 'approved'
+          },
+          createdAt: '2024-01-15',
+          question: 'Which treatment protocol shows the best outcomes for cancer patients aged 45-65?'
+        }
+      ];
+      setComputationRequests(mockRequests);
+    }
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

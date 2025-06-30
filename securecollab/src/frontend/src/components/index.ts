@@ -7,10 +7,13 @@ export * from "./Loader";
 export * from "./TextArea";
 
 // SecureCollab components
-export * from "./AgentMarketplace";
 export * from "./PrivacyDashboard";
-export * from "./DemoScenarios";
 export * from "./LlmChat";
 export * from "./EnterpriseDashboard";
 export { LoginPage } from './LoginPage';
 export { UserProfile } from './UserProfile';
+export { MultiPartyDashboard } from './MultiPartyDashboard';
+export { MultiPartyLogin } from './MultiPartyLogin';
+export { PartyStatus } from './PartyStatus';
+export { MultiPartySignature } from './MultiPartySignature';
+export { ThreePartyDashboard } from './ThreePartyDashboard';

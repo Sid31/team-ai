@@ -1,6 +1,5 @@
 import { ChangeEvent, useState } from "react";
 import { Button, Card, InputField } from "../components";
-import { backendService } from "../services/backendService";
 
 interface GreetingViewProps {
   onError: (error: string) => void;
@@ -24,7 +23,8 @@ export function GreetingView({ onError, setLoading }: GreetingViewProps) {
   const fetchGreeting = async () => {
     try {
       setLoading(true);
-      const res = await backendService.greet(name);
+      // Greeting functionality not implemented in current backend
+      const res = `Hello, ${name || 'World'}! Welcome to SecureCollab.`;
       setResponse(res);
     } catch (err) {
       console.error(err);

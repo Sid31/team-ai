@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import reactLogo from '../assets/React-icon.webp';
-import { Loader, ErrorDisplay, AgentMarketplace, PrivacyDashboard, DemoScenarios, EnterpriseDashboard } from "./components";
+import { Loader, ErrorDisplay, PrivacyDashboard, MultiPartyLogin, MultiPartyDashboard } from "./components";
 import { GreetingView, CounterView, LlmPromptView } from "./views";
 import { LoginPage } from './components/LoginPage';
 import { UserProfile } from './components/UserProfile';
@@ -9,9 +9,11 @@ import { authService } from './services/authService';
 function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | undefined>();
-  const [activeTab, setActiveTab] = useState<string>("enterprise");
+  const [activeTab, setActiveTab] = useState<string>("threeparty");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [multiPartyMode, setMultiPartyMode] = useState(false);
+  const [selectedParty, setSelectedParty] = useState<string | null>(null);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -19,6 +21,13 @@ function App() {
         await authService.init();
         const state = authService.getState();
         setIsAuthenticated(state.isAuthenticated);
+        
+        // Check for stored party selection
+        const storedPartyId = localStorage.getItem('selectedPartyId');
+        if (storedPartyId && state.isAuthenticated) {
+          setSelectedParty(storedPartyId);
+          setMultiPartyMode(true);
+        }
       } catch (error) {
         console.error('Failed to initialize auth:', error);
       } finally {
@@ -35,6 +44,18 @@ function App() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
+    setMultiPartyMode(false);
+    setSelectedParty(null);
+    // Clear stored party selection
+    localStorage.removeItem('selectedPartyId');
+  };
+
+  const handleMultiPartyLogin = (partyId: string, authenticated: boolean) => {
+    setSelectedParty(partyId);
+    setIsAuthenticated(authenticated);
+    setMultiPartyMode(true);
+    // Store the party selection for persistence
+    localStorage.setItem('selectedPartyId', partyId);
   };
 
   const handleError = (errorMessage: string) => {
@@ -46,15 +67,16 @@ function App() {
   };
 
   const renderContent = () => {
+    // If in multi-party mode, show the multi-party dashboard
+    if (multiPartyMode && selectedParty) {
+      return <MultiPartyDashboard currentPartyId={selectedParty} onLogout={handleLogout} />;
+    }
+
     switch (activeTab) {
-      case "enterprise":
-        return <EnterpriseDashboard />;
-      case "marketplace":
-        return <AgentMarketplace />;
+      case "threeparty":
+        return <MultiPartyDashboard currentPartyId="party1" onLogout={handleLogout} />;
       case "privacy":
         return <PrivacyDashboard />;
-      case "demos":
-        return <DemoScenarios />;
       case "llm":
         return <LlmPromptView onError={handleError} setLoading={setLoading} />;
       case "counter":
@@ -72,15 +94,15 @@ function App() {
                 It enables secure collaboration between AI agents while protecting sensitive data through advanced
                 cryptographic techniques like Multi-Party Computation (MPC) and vetKD encryption.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                 <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                  <h3 className="font-semibold text-lg mb-2">🤖 Agent Marketplace</h3>
-                  <p className="text-sm text-gray-600">Browse and deploy specialized AI agents for secure computation tasks.</p>
+                  <h3 className="font-semibold text-lg mb-2">🤝 Multi-Party Dashboard</h3>
+                  <p className="text-sm text-gray-600">Collaborate securely with multiple parties on sensitive computations.</p>
                   <button 
-                    onClick={() => setActiveTab("marketplace")}
+                    onClick={() => setActiveTab("threeparty")}
                     className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
-                    Explore Agents →
+                    Start Collaboration →
                   </button>
                 </div>
                 <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
@@ -91,16 +113,6 @@ function App() {
                     className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
                   >
                     Manage Data →
-                  </button>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
-                  <h3 className="font-semibold text-lg mb-2">🎭 Demo Scenarios</h3>
-                  <p className="text-sm text-gray-600">See SecureCollab in action with real-world use cases.</p>
-                  <button 
-                    onClick={() => setActiveTab("demos")}
-                    className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    View Demos →
                   </button>
                 </div>
               </div>
@@ -122,7 +134,56 @@ function App() {
   }
 
   if (!isAuthenticated) {
-    return <LoginPage onLogin={handleLogin} />;
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <div className="w-full max-w-4xl space-y-6">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">SecureCollab</h2>
+              <p className="text-gray-600 mb-8">Choose your login method</p>
+            </div>
+            
+            <div className="space-y-4">
+              <button
+                onClick={() => setMultiPartyMode(false)}
+                className={`w-full py-3 px-4 rounded-lg border-2 transition-colors ${
+                  !multiPartyMode 
+                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                <div className="text-left">
+                  <div className="font-semibold">Standard Login</div>
+                  <div className="text-sm opacity-75">Single user Internet Identity</div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => setMultiPartyMode(true)}
+                className={`w-full py-3 px-4 rounded-lg border-2 transition-colors ${
+                  multiPartyMode 
+                    ? 'border-blue-500 bg-blue-50 text-blue-700' 
+                    : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                }`}
+              >
+                <div className="text-left">
+                  <div className="font-semibold">Multi-Party Login</div>
+                  <div className="text-sm opacity-75">3-Party Secure MPC Workflow</div>
+                </div>
+              </button>
+            </div>
+            
+            <div className="mt-8">
+              {multiPartyMode ? (
+                <MultiPartyLogin onLogin={handleMultiPartyLogin} />
+              ) : (
+                <LoginPage onLogin={handleLogin} />
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -156,11 +217,12 @@ function App() {
               </div>
             </div>
             <nav className="flex space-x-4 items-center">
+
               <button
-                onClick={() => setActiveTab("enterprise")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === "enterprise" ? "bg-blue-100 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
+                onClick={() => setActiveTab("threeparty")}
+                className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === "threeparty" ? "bg-green-100 text-green-800" : "text-gray-600 hover:text-gray-900"}`}
               >
-                🏢 Enterprise Dashboard
+                🔐 Multi-Party Dashboard
               </button>
               <button
                 onClick={() => setActiveTab("home")}
@@ -169,22 +231,10 @@ function App() {
                 Home
               </button>
               <button
-                onClick={() => setActiveTab("marketplace")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === "marketplace" ? "bg-blue-100 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
-              >
-                Agent Marketplace
-              </button>
-              <button
                 onClick={() => setActiveTab("privacy")}
                 className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === "privacy" ? "bg-blue-100 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
               >
                 Privacy Dashboard
-              </button>
-              <button
-                onClick={() => setActiveTab("demos")}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${activeTab === "demos" ? "bg-blue-100 text-blue-800" : "text-gray-600 hover:text-gray-900"}`}
-              >
-                Demo Scenarios
               </button>
               <UserProfile onLogout={handleLogout} />
             </nav>

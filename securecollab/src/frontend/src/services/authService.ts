@@ -18,7 +18,16 @@ class AuthService {
   private listeners: ((state: AuthState) => void)[] = [];
 
   async init(): Promise<void> {
-    this.authClient = await AuthClient.create();
+    this.authClient = await AuthClient.create({
+      idleOptions: {
+        disableIdle: true,
+        disableDefaultIdleCallback: true
+      },
+      // Add local development options
+      ...(window.location.hostname === 'localhost' && {
+        keyType: 'Ed25519'
+      })
+    });
     
     if (await this.authClient.isAuthenticated()) {
       this.identity = this.authClient.getIdentity();
@@ -35,13 +44,26 @@ class AuthService {
 
     return new Promise((resolve) => {
       this.authClient!.login({
-        identityProvider: import.meta.env.DFX_NETWORK === "local" 
+        // Use the deployed local Internet Identity canister for development
+        identityProvider: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
           ? `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`
-          : "https://identity.ic0.app",
+          : undefined, // Use default II in production
+        maxTimeToLive: BigInt(7 * 24 * 60 * 60 * 1000 * 1000 * 1000), // 7 days in nanoseconds
         onSuccess: async () => {
           this.identity = this.authClient!.getIdentity();
           this.principal = this.identity.getPrincipal();
           this.isAuthenticated = true;
+          
+          // Automatically register with backend after successful login
+          try {
+            await this.registerIdentity();
+            console.log('Identity registered with backend successfully');
+          } catch (error) {
+            console.warn('Failed to register identity with backend:', error);
+            // Don't fail the login process if backend registration fails
+            // This allows the user to continue using the app
+          }
+          
           this.notifyListeners();
           resolve(true);
         },
@@ -77,13 +99,13 @@ class AuthService {
   }
 
   // Register user identity with backend
-  async registerIdentity(permissions: string[] = ['read', 'write', 'compute']): Promise<any> {
+  async registerIdentity(name: string = 'User', role: string = 'General User'): Promise<any> {
     if (!this.isAuthenticated) {
       throw new Error("User not authenticated");
     }
     
     try {
-      return await backendService.registerUserIdentity(permissions);
+      return await backendService.registerUserIdentity(name, role);
     } catch (error) {
       console.error('Failed to register identity:', error);
       throw error;

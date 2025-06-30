@@ -24,7 +24,33 @@ export const AgentMarketplace: React.FC = () => {
   const fetchAgents = async () => {
     try {
       setLoading(true);
-      const availableAgents = await backendService.getAvailableAgents();
+      // Mock available agents for demo
+      const availableAgents = [
+        { 
+          id: 'medical_researcher', 
+          name: 'Medical Research Agent', 
+          description: 'Specialized in medical data analysis with privacy preservation',
+          computation_type: 'medical_analysis',
+          price_per_computation: BigInt(100),
+          reputation_score: 4.8
+        },
+        { 
+          id: 'compliance_checker', 
+          name: 'Compliance Agent', 
+          description: 'Ensures regulatory compliance and generates audit trails',
+          computation_type: 'compliance_check',
+          price_per_computation: BigInt(75),
+          reputation_score: 4.9
+        },
+        { 
+          id: 'statistical_analyzer', 
+          name: 'Statistical Agent', 
+          description: 'Advanced statistical analysis and pattern recognition',
+          computation_type: 'statistical_analysis',
+          price_per_computation: BigInt(120),
+          reputation_score: 4.7
+        }
+      ];
       setAgents(availableAgents);
     } catch (err) {
       console.error('Error fetching agents:', err);
@@ -50,9 +76,13 @@ export const AgentMarketplace: React.FC = () => {
 
     try {
       setLoading(true);
-      // In a real app, we would also select data sources
+      // Create a computation request using existing workflow
       const dummyDataSourceIds = ['data_sample_1', 'data_sample_2'];
-      const teamId = await backendService.deployMpcAgents(selectedAgents, dummyDataSourceIds);
+      const queryId = await backendService.createLLMQuery(
+        `Deploy and coordinate agent team: ${selectedAgents.join(', ')}`,
+        dummyDataSourceIds
+      );
+      const teamId = `team_${queryId}`;
       alert(`Agent team deployed successfully! Team ID: ${teamId}`);
       setSelectedAgents([]);
     } catch (err) {

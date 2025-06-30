@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { Button, Card } from "../components";
-import { backendService } from "../services/backendService";
 
 interface CounterViewProps {
   onError: (error: string) => void;
@@ -16,8 +15,8 @@ export function CounterView({ onError, setLoading }: CounterViewProps) {
   const fetchCount = async () => {
     try {
       setLoading(true);
-      const res = await backendService.getCount();
-      setCount(res);
+      // Counter functionality not implemented in current backend
+      setCount(BigInt(0));
     } catch (err) {
       console.error(err);
       onError(String(err));
@@ -29,8 +28,8 @@ export function CounterView({ onError, setLoading }: CounterViewProps) {
   const incrementCounter = async () => {
     try {
       setLoading(true);
-      const res = await backendService.incrementCounter();
-      setCount(res);
+      // Counter functionality not implemented in current backend
+      setCount(prev => prev + BigInt(1));
     } catch (err) {
       console.error(err);
       onError(String(err));

@@ -1,0 +1,16 @@
+patient_id,age,treatment,outcome,recovery_days,side_effects,hospital_id
+P001,45,Drug_X,Improved,12,None,BGH_001
+P002,62,Drug_Y,Improved,18,Mild,BGH_002
+P003,38,Drug_X,Cured,8,None,BGH_003
+P004,55,Drug_Y,Improved,22,Moderate,NOV_001
+P005,41,Drug_X,Cured,10,None,NOV_002
+P006,67,Drug_Y,No_Change,30,Severe,NOV_003
+P007,33,Drug_X,Improved,14,Mild,MIT_001
+P008,58,Drug_Y,Improved,16,None,MIT_002
+P009,49,Drug_X,Cured,9,None,MIT_003
+P010,71,Drug_Y,Improved,25,Moderate,MIT_004
+P011,44,Drug_X,Improved,11,None,BGH_004
+P012,59,Drug_Y,Cured,19,Mild,BGH_005
+P013,36,Drug_X,Improved,13,None,NOV_004
+P014,52,Drug_Y,No_Change,28,Severe,NOV_005
+P015,47,Drug_X,Cured,7,None,MIT_005
