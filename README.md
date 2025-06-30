@@ -2,7 +2,7 @@
 
 ## 🔐 Privacy-Preserving Multi-Party Data Collaboration
 
-SecureCollab is a **secure multi-party computation (MPC) platform** built on the Internet Computer that enables **3 organizations to collaborate on sensitive data** without exposing raw information. Features modern Pebble-inspired UI design with real Internet Identity authentication and VetKD encryption.
+SecureCollab is a **secure multi-party computation (SMPC) platform** built on the Internet Computer that enables **3 organizations to collaborate on sensitive data** without exposing raw information. Features modern Pebble-inspired UI design with real Internet Identity authentication and VetKD encryption.
 
 ## 🏥 Core Use Case: Healthcare Data Collaboration
 
