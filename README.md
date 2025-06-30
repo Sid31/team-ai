@@ -41,7 +41,7 @@ SecureCollab is a **secure multi-party computation (SMPC) platform** built on th
 ## 🏗️ Technical Architecture
 
 ### Backend (Rust Canister on Internet Computer)
-- **Multi-Party Computation Engine**: Core MPC workflow with 3-party approval system
+- **Multi-Party Computation Engine**: Core SMPC workflow with 3-party approval system
 - **VetKD Integration**: Real threshold key derivation for secure data encryption
 - **Internet Identity Auth**: Decentralized authentication for each organization
 - **Voting System**: Explicit Yes/No voting with cryptographic signature verification
@@ -49,7 +49,7 @@ SecureCollab is a **secure multi-party computation (SMPC) platform** built on th
 
 ### Frontend (React + TypeScript)
 - **Multi-Party Login**: Organization selection with Internet Identity authentication
-- **MPC Dashboard**: Complete workflow for data upload, requests, and approvals
+- **SMPC Dashboard**: Complete workflow for data upload, requests, and approvals
 - **Responsive Design**: Pebble-inspired minimalist UI across all devices
 - **Real-time Status**: Live updates of computation request states across parties
 
@@ -84,7 +84,7 @@ npm run dev
 3. Experience the modern Pebble-inspired black and white UI
 
 ### Step 2: 3-Party Authentication Flow
-**Test the complete MPC workflow by switching between all 3 parties:**
+**Test the complete SMPC workflow by switching between all 3 parties:**
 
 #### 🏥 Party 1: Boston General Hospital
 1. Select "Boston General Hospital" from party selection
@@ -163,7 +163,7 @@ get_user_identity() -> Result<Principal>
 
 ### Key Test Scenarios
 1. **3-Party Authentication**: All parties can login with Internet Identity
-2. **Computation Requests**: AI queries create proper MPC requests
+2. **Computation Requests**: AI queries create proper SMPC requests
 3. **Unanimous Approval**: All 3 parties must vote "Yes" before execution
 4. **Execution Permissions**: Only original requester can execute
 5. **Privacy Guarantees**: No raw data exposure during computation
